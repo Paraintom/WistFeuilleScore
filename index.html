@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Wist feuille de score</title>
+    <link rel="stylesheet" href="./bulma.0.9.0.css">
+	<link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div id="app" class="container grid-lg">
+      <h1>Wist</h1>
+
+		<!--headers-->
+      <table id="mainTable" class="table is-striped is-narrow is-bordered is-fullwidth">
+        <thead>
+          <tr>
+            <th>tours</th>
+            <th
+              v-for="(player, index) in players"
+              :key="index"
+              @click="rotatePlayerName(index)"
+            >
+              {{ player }} 
+			  <button
+				v-if="canRemovePlayer()"
+				type="button"
+				@click.stop="removePlayer(index)">
+				&times;
+			  </button>
+            </th>
+          </tr>
+        </thead>
+
+		<!--body-->
+        <tbody>
+         <tr
+			v-for="(tour, tourIndex) in tours"
+			:key="tour"
+			:class="{
+			  'has-background-info-light': tourIndex === tours.indexOf(currentTour),
+			  	'has-text-grey-light': tourIndex > tours.indexOf(currentTour)
+			}"
+		  >
+			<td
+			  class="has-text-weight-semibold"
+			  :class="{
+				'is-clickable': tourIndex <= tours.indexOf(currentTour),
+				'has-text-info': tourIndex === tours.indexOf(currentTour),
+				'has-text-grey-light': tourIndex > tours.indexOf(currentTour)
+			  }"
+			  @click="selectCurrentTour(tourIndex)"
+			>
+			  {{ tour }}
+			  <span
+				v-if="tourIndex === tours.indexOf(currentTour)"
+				class="tag is-info is-light ml-2"
+			  >
+				En cours
+			  </span>
+			</td>
+
+            <td
+              v-for="(player, playerIndex) in players"
+              :key="playerIndex"
+              :class="{ 'contrat-cell': tour === currentTour }"
+              @click="tour === currentTour && openContractModal(playerIndex)"
+            >
+               <div class="cell-values">
+				<span class="cell-contrat">
+				  {{ scores[tour][playerIndex].contrat ?? '' }}
+				</span>				
+				<span class="cell-score">
+				  {{ scores[tour][playerIndex].score ?? '' }}
+				</span>
+				<span class="cell-plis" v-html="renderPlisCell(tour, playerIndex)">
+				</span>
+			  </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+	  <!--MODAL-->
+      <contract-modal
+		  ref="contractModal" 
+		  :player-index="editingPlayerIndex"
+		  :player="players[editingPlayerIndex]"
+		  :tour="currentTour"
+		  :current-tour-scores="scores[currentTour]"
+		  @previous="previousContract"
+		  @next="nextContract"
+		  @update-contract="onContractInput"
+		  @update-plis="onNombrePlisInput"
+		/>
+    </div>
+
+	<script src="./ContractModal.js"></script>
+    <script src="./vue.3.0.0-rc.10.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
