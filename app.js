@@ -181,11 +181,13 @@ const appSpec = {
       }
     },
 
-    onNombrePlisInput(player, tour , value) {		
-	  console.info(player, tour, value);
-	  let playerIndex = this.players.indexOf(player);      
+    onNombrePlisInput(player, tour, value) {
+      const playerIndex = this.players.indexOf(player);
+      const isClear = value === null || value === undefined || value === "";
 
-      this.setNombrePlis(tour, playerIndex, value);
+      this.setNombrePlis(tour, playerIndex, isClear ? null : value);
+
+      if (isClear) return;
 	  
 	  const row = this.scores[tour];
 	  
