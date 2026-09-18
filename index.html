@@ -37,15 +37,14 @@
 			:key="tour"
 			:class="{
 			  'has-background-info-light': tourIndex === tours.indexOf(currentTour),
-			  	'has-text-grey-light': tourIndex > tours.indexOf(currentTour)
+			  	'has-text-grey-light': tour !== currentTour && !tourHasScore(tour)
 			}"
 		  >
 			<td
-			  class="has-text-weight-semibold"
+			  class="has-text-weight-semibold is-clickable"
 			  :class="{
-				'is-clickable': tourIndex <= tours.indexOf(currentTour),
 				'has-text-info': tourIndex === tours.indexOf(currentTour),
-				'has-text-grey-light': tourIndex > tours.indexOf(currentTour)
+				'has-text-grey-light': tour !== currentTour && !tourHasScore(tour)
 			  }"
 			  @click="selectCurrentTour(tourIndex)"
 			>

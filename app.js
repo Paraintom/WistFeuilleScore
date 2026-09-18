@@ -71,40 +71,45 @@ const appSpec = {
       this.currentTour = this.tours[tourIndex];
     },
 
+    tourHasScore(tour) {
+      return Object.values(this.scores[tour] || {}).some(
+        (cell) => cell.score != null && cell.score !== ""
+      );
+    },
+
     getPreviousScore(tour, playerIndex) {
-      let previousScore = 0;
       const currentTourIndex = this.tours.indexOf(tour);
 
-      if (tour > this.tours[0]) {
-        const previousTour = this.tours[currentTourIndex - 1];
-        previousScore = Number(this.scores[previousTour][playerIndex].score) || 0;
+      for (let i = currentTourIndex - 1; i >= 0; i--) {
+        const previousTour = this.tours[i];
+        const previousScore = this.scores[previousTour]?.[playerIndex]?.score;
+        if (previousScore != null && previousScore !== "") {
+          return Number(previousScore);
+        }
       }
 
-      return previousScore;
+      return 0;
     },
 
     computeScore(tour, playerIndex) {
-      const previousScore = this.getPreviousScore(tour, playerIndex);
-
       const contract = this.scores[tour][playerIndex].contrat;
       const plis = this.scores[tour][playerIndex].nombrePlis;
 
       if (contract == null || plis == null) {
         this.scores[tour][playerIndex].score = null;
-        return;
+      } else {
+        const previousScore = this.getPreviousScore(tour, playerIndex);
+        const roundPoints =
+          contract === plis ? 10 + 5 * plis : -5 * Math.abs(contract - plis);
+
+        this.scores[tour][playerIndex].score = previousScore + roundPoints;
       }
-
-      const roundPoints =
-        contract === plis ? 10 + 5 * plis : -5 * Math.abs(contract - plis);
-
-      this.scores[tour][playerIndex].score = previousScore + roundPoints;
 
       const currentTourIndex = this.tours.indexOf(tour);
       const nextTourIndex = currentTourIndex + 1;
 
       if (nextTourIndex < this.tours.length) {
-        const nextTour = this.tours[nextTourIndex];
-        this.computeScore(nextTour, playerIndex);
+        this.computeScore(this.tours[nextTourIndex], playerIndex);
       }
     },
 
