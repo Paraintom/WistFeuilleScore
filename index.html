@@ -64,6 +64,10 @@
               :class="{ 'contrat-cell': tour === currentTour }"
               @click="tour === currentTour && openContractModal(playerIndex)"
             >
+			   <span
+			     v-if="isDealerCell(tourIndex, playerIndex)"
+			     class="cell-triangle"
+			   ></span>
                <div class="cell-values">
 				<span class="cell-contrat">
 				  {{ scores[tour][playerIndex].contrat ?? '' }}

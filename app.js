@@ -7,6 +7,7 @@ const appSpec = {
       scores: {},
       modalOpen: false,
       editingPlayerIndex: null,
+      dealerIndex: null,
     };
   },
 
@@ -76,6 +77,13 @@ const appSpec = {
       );
     },
 
+    isDealerCell(tourIndex, playerIndex) {
+      if (this.dealerIndex == null) return false;
+      const n = this.players.length;
+      const dealerThisTour = (this.dealerIndex + tourIndex) % n;
+      return playerIndex === dealerThisTour;
+    },
+
     getPreviousScore(tour, playerIndex) {
       const currentTourIndex = this.tours.indexOf(tour);
 
@@ -129,6 +137,7 @@ const appSpec = {
     },
 
     initScores() {
+      this.dealerIndex = null;
       this.scores = Object.fromEntries(
         this.tours.map((tour) => [
           tour,
@@ -149,6 +158,12 @@ const appSpec = {
       const allContractsSetBefore = Object.values(this.scores[tour]).every(
         (cell) => cell.contrat !== null && cell.contrat !== undefined && cell.contrat !== ""
       );
+
+      if (this.dealerIndex == null) {
+        const n = this.players.length;
+        const tourIndex = this.tours.indexOf(tour);
+        this.dealerIndex = (playerIndex - 1 - tourIndex + n) % n;
+      }
 	  
       this.scores[tour][playerIndex].contrat = nextValue;
       this.computeScore(tour, playerIndex);

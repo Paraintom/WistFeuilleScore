@@ -17,9 +17,21 @@
         min-width: 120px;
       }
 
-      .contrat-cell {
-        cursor: pointer;
-      }
+      #mainTable td {
+  position: relative;
+}
+
+.cell-triangle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-top: 10px solid #3298dc;
+  border-right: 10px solid transparent;
+  z-index: 2;
+  pointer-events: none;
+}
 	  .cell-values {
 		  display: flex;
 		  justify-content: space-between;
