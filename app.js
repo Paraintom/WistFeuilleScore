@@ -51,9 +51,7 @@ const appSpec = {
 			return ``;
 		}
 		
-		// whole‑tour match ("la vache"), except on the last turn
-		const lastTour = this.tours[this.tours.length - 1];
-		if (contract === plis && contract === tour && tour !== lastTour) {
+		if (this.isVache(tour, contract, plis)) {
 			return `<span class="has-text-warning" title="la vache">V</span>`;
 		}
 	
@@ -92,6 +90,11 @@ const appSpec = {
       return 0;
     },
 
+    isVache(tour, contract, plis) {
+      const lastTour = this.tours[this.tours.length - 1];
+      return contract === plis && contract === tour && tour !== lastTour;
+    },
+
     computeScore(tour, playerIndex) {
       const contract = this.scores[tour][playerIndex].contrat;
       const plis = this.scores[tour][playerIndex].nombrePlis;
@@ -101,7 +104,9 @@ const appSpec = {
       } else {
         const previousScore = this.getPreviousScore(tour, playerIndex);
         const roundPoints =
-          contract === plis ? 10 + 5 * plis : -5 * Math.abs(contract - plis);
+          contract === plis
+            ? 10 + 5 * plis + (this.isVache(tour, contract, plis) ? 10 : 0)
+            : -5 * Math.abs(contract - plis);
 
         this.scores[tour][playerIndex].score = previousScore + roundPoints;
       }
