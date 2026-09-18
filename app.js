@@ -8,12 +8,28 @@ const appSpec = {
       modalOpen: false,
       editingPlayerIndex: null,
       dealerIndex: null,
+      _persistReady: false,
+      _restoring: false,
+      _persistTimer: null,
+      _ignoreHash: false,
     };
   },
 
   created() {
-	this.editingPlayerIndex = 0;
+    this.editingPlayerIndex = 0;
     this.initScores();
+    this._restoring = true;
+    this.loadUrlState();
+    this._restoring = false;
+    this._persistReady = true;
+    window.addEventListener("hashchange", this.onHashChange);
+  },
+
+  watch: {
+    players: { handler: "schedulePersist", deep: true },
+    scores: { handler: "schedulePersist", deep: true },
+    currentTour: "schedulePersist",
+    dealerIndex: "schedulePersist",
   },
 
   computed: {
@@ -78,6 +94,7 @@ const appSpec = {
 	},
     selectCurrentTour(tourIndex) {
       this.currentTour = this.tours[tourIndex];
+      this.schedulePersist();
     },
 
     tourHasScore(tour) {
@@ -143,10 +160,11 @@ const appSpec = {
       const nextIndex = (available.indexOf(current) + 1) % available.length;
 
       this.players[index] = available[nextIndex];
+      this.schedulePersist();
     },
 
-    initScores() {
-      this.dealerIndex = null;
+    initScores(options = {}) {
+      if (options.resetDealer !== false) this.dealerIndex = null;
       this.scores = Object.fromEntries(
         this.tours.map((tour) => [
           tour,
@@ -176,6 +194,7 @@ const appSpec = {
 	  
       this.scores[tour][playerIndex].contrat = nextValue;
       this.computeScore(tour, playerIndex);
+      this.schedulePersist();
 
       const allContractsSet = Object.values(this.scores[tour]).every(
         (cell) => cell.contrat !== null && cell.contrat !== undefined && cell.contrat !== ""
@@ -191,6 +210,7 @@ const appSpec = {
     setNombrePlis(tour, playerIndex, value) {
       this.scores[tour][playerIndex].nombrePlis = value;
       this.computeScore(tour, playerIndex);
+      this.schedulePersist();
 
       const allScoresSet = Object.values(this.scores[tour]).every(
         (cell) => cell.contrat != null && cell.nombrePlis != null
@@ -278,6 +298,85 @@ const appSpec = {
 
       this.players.splice(index, 1);
       this.initScores();
+    },
+
+    onHashChange() {
+      if (this._ignoreHash) return;
+      this._restoring = true;
+      this.loadUrlState();
+      this._restoring = false;
+    },
+
+    schedulePersist() {
+      if (this._restoring || !this._persistReady) return;
+      clearTimeout(this._persistTimer);
+      this._persistTimer = setTimeout(() => this.writeUrlState(), 40);
+    },
+
+    isDefaultState() {
+      const defaultPlayers = ["Papa", "Maman", "Mimi", "Toto", "Dada"];
+      if (this.players.length !== defaultPlayers.length) return false;
+      if (this.players.some((name, i) => name !== defaultPlayers[i])) return false;
+      if (this.dealerIndex != null) return false;
+      return this.tours.every((tour) =>
+        Object.values(this.scores[tour] || {}).every(
+          (cell) => cell.contrat == null && cell.nombrePlis == null
+        )
+      );
+    },
+
+    writeUrlState() {
+      if (this.isDefaultState()) {
+        this._ignoreHash = true;
+        WistUrlState.writeHash("");
+        this._ignoreHash = false;
+        return;
+      }
+
+      const token = WistUrlState.encode({
+        players: this.players,
+        currentTour: this.currentTour,
+        dealerIndex: this.dealerIndex,
+        tours: this.tours,
+        scores: this.scores,
+      });
+      this._ignoreHash = true;
+      WistUrlState.writeHash(token);
+      this._ignoreHash = false;
+    },
+
+    loadUrlState() {
+      const token = WistUrlState.readHash();
+      if (!token) return;
+
+      let decoded;
+      try {
+        decoded = WistUrlState.decode(token);
+      } catch (e) {
+        return;
+      }
+      if (!decoded) return;
+
+      this.players = decoded.players;
+      this.initScores({ resetDealer: false });
+      this.dealerIndex = decoded.dealerIndex;
+
+      decoded.cells.forEach((cell) => {
+        const row = this.scores[cell.tour];
+        if (!row || !row[cell.playerIndex]) return;
+        row[cell.playerIndex].contrat = cell.contrat;
+        row[cell.playerIndex].nombrePlis = cell.nombrePlis;
+      });
+
+      if (this.tours.includes(decoded.currentTour)) {
+        this.currentTour = decoded.currentTour;
+      } else {
+        this.currentTour = this.tours[0];
+      }
+
+      this.players.forEach((_, playerIndex) => {
+        if (this.tours.length) this.computeScore(this.tours[0], playerIndex);
+      });
     },
   },
 };
