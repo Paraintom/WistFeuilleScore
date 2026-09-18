@@ -3,7 +3,7 @@ const appSpec = {
     return {
       currentTour: 2,
       players: ["Papa", "Maman", "Mimi", "Toto", "Dada"],
-      allNames: ["Papa", "Maman", "Mimi", "Toto", "Dada", "Autre"],
+      allNames: ["Papa", "Maman", "Mimi", "Toto", "Dada", "Ayana", "Laura", "Nicole", "Autre"],
       scores: {},
       modalOpen: false,
       editingPlayerIndex: null,
@@ -19,14 +19,23 @@ const appSpec = {
   computed: {
     tours() {
       const nPlayers = this.players.length;
-      const max = Math.floor(52 / nPlayers);
+      const max = Math.min(15, Math.floor(52 / nPlayers));
+
+      let step;
+      if (nPlayers === 2) {
+        step = 6;
+      } else if (nPlayers === 3) {
+        step = 4;
+      } else {
+        step = 2;
+      }
 
       const up = [];
-      for (let t = 2; t <= max; t += 2) up.push(t);
+      for (let t = 2; t <= max; t += step) up.push(t);
 
       const down = [];
       const startDown = max % 2 === 0 ? max - 1 : max;
-      for (let t = startDown; t >= 1; t -= 2) down.push(t);
+      for (let t = startDown; t >= 1; t -= step) down.push(t);
 
       return [...up, ...down];
     },
