@@ -51,8 +51,9 @@ const appSpec = {
 			return ``;
 		}
 		
-		// whole‑tour match
-		if (contract === plis && contract === tour) {
+		// whole‑tour match ("la vache"), except on the last turn
+		const lastTour = this.tours[this.tours.length - 1];
+		if (contract === plis && contract === tour && tour !== lastTour) {
 			return `<span class="has-text-warning" title="la vache">V</span>`;
 		}
 	
