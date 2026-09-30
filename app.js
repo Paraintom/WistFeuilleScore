@@ -226,25 +226,39 @@ const appSpec = {
 	    0
 	  );
 
-	  // If the total has been reached, we can assume the rest didn't had any plis.
+	  // Once this player's tricks already account for the whole round, the others took none.
       if (total === tour) {
         Object.entries(row).forEach(([remainingIndex, cell]) => {
           if (cell.nombrePlis === null || cell.nombrePlis === undefined || cell.nombrePlis === "") {
             this.setNombrePlis(tour, remainingIndex, 0);
           }
         });
-        return;
       }
-      
-	  // If there is only one player to set the score, we can deduce it.
-	  const missing = Object.entries(row).filter(
-        ([, cell]) => cell.nombrePlis === null || cell.nombrePlis === undefined || cell.nombrePlis === ""
-      );
+    },
 
-      if (missing.length === 1) {
-        const lastIndex = missing[0][0];
-        this.setNombrePlis(tour, lastIndex, tour - total);
-      }
+    onContractModalClose() {
+      this.finalizeRemainingPlis(this.currentTour);
+    },
+
+    finalizeRemainingPlis(tour) {
+      const row = this.scores[tour];
+      if (!row) return;
+
+      const isUnset = (cell) =>
+        cell.nombrePlis === null || cell.nombrePlis === undefined || cell.nombrePlis === "";
+
+      const total = Object.values(row).reduce(
+        (sum, cell) => sum + (Number(cell.nombrePlis) || 0),
+        0
+      );
+      const missing = Object.entries(row).filter(([, cell]) => isUnset(cell));
+
+      if (missing.length !== 1) return;
+
+      const remaining = tour - total;
+      if (remaining < 0 || remaining > tour) return;
+
+      this.setNombrePlis(tour, missing[0][0], remaining);
     },
 	
     previousContract() {
@@ -254,9 +268,29 @@ const appSpec = {
       this.$nextTick(() => this.$refs.contractInput?.focus?.());
     },
 
+    isLastUnsetPlisPlayer(playerIndex) {
+      if (!this.allContractsSelected) return false;
+
+      const row = this.scores[this.currentTour];
+      if (!row) return false;
+
+      const missing = Object.entries(row).filter(
+        ([, cell]) => cell.nombrePlis === null || cell.nombrePlis === undefined || cell.nombrePlis === ""
+      );
+
+      return missing.length === 1 && Number(missing[0][0]) === playerIndex;
+    },
+
     nextContract() {
-      this.editingPlayerIndex =
-        (this.editingPlayerIndex + 1) % this.players.length;
+      const nextIndex = (this.editingPlayerIndex + 1) % this.players.length;
+
+      if (this.isLastUnsetPlisPlayer(nextIndex)) {
+        this.finalizeRemainingPlis(this.currentTour);
+      }
+
+      if (!this.$refs.contractModal.isOpen) return;
+
+      this.editingPlayerIndex = nextIndex;
 
       this.$nextTick(() => this.$refs.contractInput?.focus?.());
     },

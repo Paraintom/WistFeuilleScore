@@ -6,7 +6,7 @@ const ContractModal = {
     tour: [Number],
     currentTourScores: [Object],
   },
-  emits: ["update-contract", "update-plis", "previous", "next"],
+  emits: ["update-contract", "update-plis", "previous", "next", "close"],
   data() {
     return {
       isOpen: false,
@@ -98,6 +98,7 @@ const ContractModal = {
   methods: {
     close() {
       this.isOpen = false;
+      this.$emit("close");
     },
     currentNumber(value) {
       if (value == null || value === "") return 0;
