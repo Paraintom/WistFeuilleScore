@@ -300,6 +300,17 @@ const appSpec = {
       this.initScores();
     },
 
+    resetGame() {
+      if (!confirm("Réinitialiser la partie ?")) return;
+
+      this.closeContractModal();
+      this.players = ["Papa", "Maman", "Mimi", "Toto", "Dada"];
+      this.currentTour = 2;
+      this.editingPlayerIndex = 0;
+      this.initScores();
+      this.writeUrlState();
+    },
+
     onHashChange() {
       if (this._ignoreHash) return;
       this._restoring = true;

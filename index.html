@@ -8,10 +8,32 @@
   </head>
   <body>
     <div id="app" class="container grid-lg">
-      <h1>Wist</h1>
+      <header class="page-header">
+        <h1>Wist</h1>
+        <button
+          type="button"
+          class="reset-btn"
+          @click="resetGame"
+        >
+          Réinitialiser
+        </button>
+      </header>
 
-		<!--headers-->
-      <table id="mainTable" class="table is-striped is-narrow is-bordered is-fullwidth">
+	  <!--TABLE-->
+	  <!--headers-->
+      <table
+        id="mainTable"
+        class="table is-striped is-narrow is-bordered is-fullwidth"
+        :style="{ '--players': players.length }"
+      >
+        <colgroup>
+          <col class="col-tour" />
+          <col
+            v-for="(player, index) in players"
+            :key="'col-' + index"
+            class="col-player"
+          />
+        </colgroup>
         <thead>
           <tr>
             <th>tours</th>
@@ -50,12 +72,7 @@
 			  @click="selectCurrentTour(tourIndex)"
 			>
 			  {{ tour }}
-			  <span
-				v-if="tourIndex === tours.indexOf(currentTour)"
-				class="tag is-info is-light ml-2"
-			  >
-				En cours
-			  </span>
+			  
 			</td>
 
             <td

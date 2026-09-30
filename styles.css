@@ -6,20 +6,65 @@
 
       h1 {
         font-size: 2.5rem;
+        margin: 0;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+      }
+
+      .reset-btn {
+        flex-shrink: 0;
+        border: 0;
+        border-radius: 999px;
+        padding: 0.45rem 0.9rem;
+        background: #f3f4f6;
+        color: #1f2937;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .reset-btn:hover {
+        background: #e5e7eb;
       }
 
       tr {
         height: 3em;
       }
 
-      .firstColumns {
-        width: 14%;
-        min-width: 120px;
+      #app.container {
+        max-width: none;
+        width: 100%;
+      }
+
+      #mainTable {
+        table-layout: fixed;
+        width: 100%;
+      }
+
+      #mainTable .col-tour {
+        width: calc(100% / (2 * var(--players) + 1));
+      }
+
+      #mainTable .col-player {
+        width: calc(200% / (2 * var(--players) + 1));
+      }
+
+      #mainTable th,
+      #mainTable td {
+        overflow: hidden;
+        white-space: normal;
+        overflow-wrap: anywhere;
       }
 
       #mainTable td {
-  position: relative;
-}
+        position: relative;
+      }
 
 .cell-triangle {
   position: absolute;
