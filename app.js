@@ -182,10 +182,6 @@ const appSpec = {
 	  let playerIndex = this.players.indexOf(player);
       const nextValue = Number(value);
 
-      const allContractsSetBefore = Object.values(this.scores[tour]).every(
-        (cell) => cell.contrat !== null && cell.contrat !== undefined && cell.contrat !== ""
-      );
-
       if (this.dealerIndex == null) {
         const n = this.players.length;
         const tourIndex = this.tours.indexOf(tour);
@@ -195,16 +191,6 @@ const appSpec = {
       this.scores[tour][playerIndex].contrat = nextValue;
       this.computeScore(tour, playerIndex);
       this.schedulePersist();
-
-      const allContractsSet = Object.values(this.scores[tour]).every(
-        (cell) => cell.contrat !== null && cell.contrat !== undefined && cell.contrat !== ""
-      );
-
-      //console.info("allContractsSetBefore..."+allContractsSetBefore+" allContractsSet "+allContractsSet);
-      if (!allContractsSetBefore && allContractsSet) {
-		console.info("Closing modal");
-        this.closeContractModal();
-      }
     },
 
     setNombrePlis(tour, playerIndex, value) {

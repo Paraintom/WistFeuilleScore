@@ -88,25 +88,16 @@ const ContractModal = {
     },
   },
   watch: {
-    isOpen(open) {
+    isOpen() {
       this.error = null;
-      if (open) this.$nextTick(() => this.focusActiveInput());
     },
     playerIndex() {
       this.error = null;
-      if (this.isOpen) this.$nextTick(() => this.focusActiveInput());
     },
   },
   methods: {
     close() {
       this.isOpen = false;
-    },
-    focusActiveInput() {
-      const target = this.allContractsSelected
-        ? this.$refs.nombrePlisInputsInput
-        : this.$refs.contractInput;
-      target?.focus?.();
-      target?.select?.();
     },
     currentNumber(value) {
       if (value == null || value === "") return 0;
@@ -117,13 +108,24 @@ const ContractModal = {
       const next = this.currentNumber(value) + delta;
       return next >= 0 && next <= this.tour;
     },
+    isForbiddenContract(value) {
+      if (!this.isLastToSetContract) return false;
+      const forbidden = this.remainingContractToTour;
+      return forbidden >= 0 && forbidden <= this.tour && value === forbidden;
+    },
+    nextContractStep(value, delta) {
+      let next = this.currentNumber(value) + delta;
+      if (this.isForbiddenContract(next)) next += delta;
+      if (next < 0 || next > this.tour) return null;
+      return next;
+    },
+    canNudgeContract(value, delta) {
+      return this.nextContractStep(value, delta) != null;
+    },
     nudgeContract(delta) {
-      if (!this.canNudge(this.contractInputs, delta)) return;
-      this.emitContract(
-        this.player,
-        this.tour,
-        this.currentNumber(this.contractInputs) + delta
-      );
+      const next = this.nextContractStep(this.contractInputs, delta);
+      if (next == null) return;
+      this.emitContract(this.player, this.tour, next);
     },
     nudgePlis(delta) {
       if (!this.canNudge(this.nombrePlisInputs, delta)) return;
@@ -239,7 +241,7 @@ const ContractModal = {
                   type="button"
                   class="stepper-btn"
                   aria-label="Augmenter le contrat"
-                  :disabled="!canNudge(contractInputs, 1)"
+                  :disabled="!canNudgeContract(contractInputs, 1)"
                   @mousedown.prevent
                   @click="nudgeContract(1)"
                 >
@@ -250,19 +252,17 @@ const ContractModal = {
                 <input
                   ref="contractInput"
                   class="input modal-number"
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  :max="tour"
+                  type="text"
+                  inputmode="none"
+                  readonly
+                  tabindex="-1"
                   :value="contractInputs"
-                  @blur="emitContract(player, tour, $event.target.value)"
-                  @keydown.enter.prevent="$event.target.blur()"
                 >
                 <button
                   type="button"
                   class="stepper-btn"
                   aria-label="Diminuer le contrat"
-                  :disabled="!canNudge(contractInputs, -1)"
+                  :disabled="!canNudgeContract(contractInputs, -1)"
                   @mousedown.prevent
                   @click="nudgeContract(-1)"
                 >
@@ -291,13 +291,11 @@ const ContractModal = {
                 <input
                   ref="nombrePlisInputsInput"
                   class="input modal-number"
-                  type="number"
-                  inputmode="numeric"
-                  min="0"
-                  :max="tour"
+                  type="text"
+                  inputmode="none"
+                  readonly
+                  tabindex="-1"
                   :value="nombrePlisInputs"
-                  @blur="emitnombrePlisInputs(player, tour, $event.target.value)"
-                  @keydown.enter.prevent="$event.target.blur()"
                 >
                 <button
                   type="button"

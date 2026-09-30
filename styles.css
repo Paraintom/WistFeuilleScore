@@ -294,6 +294,8 @@
   font-weight: 700;
   -moz-appearance: textfield;
   appearance: textfield;
+  caret-color: transparent;
+  pointer-events: none;
 }
 
 .modal-number::-webkit-outer-spin-button,
