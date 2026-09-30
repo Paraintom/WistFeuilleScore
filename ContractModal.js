@@ -11,6 +11,7 @@ const ContractModal = {
     return {
       isOpen: false,
       error: null,
+      showPlis: false,
     };
   },
   computed: {
@@ -77,19 +78,23 @@ const ContractModal = {
       const plural = remaining > 1 ? "s" : "";
       return `il reste ${remaining} pli${plural} a prendre`;
     },
+    closeInsteadOfNext() {
+      return this.isLastToSetContract && !this.showPlis;
+    },
     showMeta() {
       const hasPlis =
         this.nombrePlisInputs != null && this.nombrePlisInputs !== "";
       return (
         !!this.contractHint ||
-        (this.allContractsSelected && this.remainingPlis > 0) ||
-        (this.allContractsSelected && hasPlis)
+        (this.showPlis && this.remainingPlis > 0) ||
+        (this.showPlis && hasPlis)
       );
     },
   },
   watch: {
-    isOpen() {
+    isOpen(open) {
       this.error = null;
+      if (open) this.showPlis = this.allContractsSelected;
     },
     playerIndex() {
       this.error = null;
@@ -234,7 +239,7 @@ const ContractModal = {
             <h2 class="modal-title">{{ player }}</h2>
           </header>
 
-          <div class="modal-fields" :class="{ 'is-split': allContractsSelected }">
+          <div class="modal-fields" :class="{ 'is-split': showPlis }">
             <label class="modal-field">
               <span>Contrat</span>
               <div class="modal-stepper">
@@ -274,7 +279,7 @@ const ContractModal = {
               </div>
             </label>
 
-            <label v-if="allContractsSelected" class="modal-field">
+            <label v-if="showPlis" class="modal-field">
               <span>Plis</span>
               <div class="modal-stepper">
                 <button
@@ -319,13 +324,13 @@ const ContractModal = {
               {{ contractHint }}
             </p>
             <p
-              v-else-if="remainingPlis > 0 && allContractsSelected"
+              v-else-if="remainingPlis > 0 && showPlis"
               class="modal-hint"
             >
               {{ remainingPlis }} pli{{ remainingPlis > 1 ? 's' : '' }} restant{{ remainingPlis > 1 ? 's' : '' }}
             </p>
             <button
-              v-if="allContractsSelected && nombrePlisInputs != null && nombrePlisInputs !== ''"
+              v-if="showPlis && nombrePlisInputs != null && nombrePlisInputs !== ''"
               class="modal-reset"
               type="button"
               @mousedown.prevent
@@ -339,6 +344,18 @@ const ContractModal = {
         </div>
 
         <button
+          v-if="closeInsteadOfNext"
+          type="button"
+          class="modal-nav"
+          aria-label="Fermer"
+          @click="close"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M7 7l10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button
+          v-else
           type="button"
           class="modal-nav"
           aria-label="Joueur suivant"
