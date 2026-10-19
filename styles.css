@@ -1,4 +1,8 @@
- body {
+ html {
+        font-size: 14.36px;
+      }
+
+      body {
         font-family: Geneva, Tahoma, Verdana, sans-serif;
         margin: 1rem;
         font-size: 1.02rem;
@@ -47,6 +51,7 @@
         width: 100%;
         border-collapse: separate;
         border-spacing: 0;
+        font-size: 90%;
       }
 
       #mainTable thead th {
@@ -55,6 +60,49 @@
         z-index: 3;
         background: #fff;
         box-shadow: inset 0 -2px 0 #dbdbdb, 0 -1rem 0 0 #fff;
+      }
+
+      .player-name {
+        position: relative;
+        z-index: 1;
+        background: #fff;
+      }
+
+      .winner-chip {
+        position: absolute;
+        top: 0.2em;
+        right: 0.2em;
+        z-index: 0;
+        border-radius: 999px;
+        padding: 0.08em 0.42em;
+        background: #f3efe4;
+        color: #8a6d2b;
+        font-size: 0.58rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        line-height: 1.25;
+        pointer-events: none;
+      }
+
+      #mainTable td.is-winner-score {
+        animation: winner-gold-fade 3.6s ease-in-out infinite;
+      }
+
+      @keyframes winner-gold-fade {
+        0%,
+        100% {
+          background-color: #fff;
+        }
+        50% {
+          background-color: #f4e4b8;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #mainTable td.is-winner-score {
+          animation: none;
+          background-color: #f4e4b8;
+        }
       }
 
       #mainTable .col-tour {
@@ -351,13 +399,8 @@
 }
 
 @media (max-width: 420px) {
-  .modal-shell {
-    flex-direction: column;
-  }
-
   .score-pad {
-    width: min(300px, calc(100vw - 2rem));
-    order: -1;
+    width: min(300px, calc(100vw - 7rem));
   }
 
   .modal-nav {

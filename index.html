@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Wist feuille de score</title>
     <link rel="stylesheet" href="./bulma.0.9.0.css">
 	<link rel="stylesheet" href="./styles.css">
@@ -36,13 +37,15 @@
         </colgroup>
         <thead>
           <tr>
-            <th>tours</th>
+            <th></th>
             <th
               v-for="(player, index) in players"
               :key="index"
+              :class="{ 'is-winner-header': isWinner(index) }"
               @click="rotatePlayerName(index)"
             >
-              {{ player }} 
+              <span class="player-name">{{ player }}</span>
+              <span v-if="isWinner(index)" class="winner-chip">1er</span>
 			  <button
 				v-if="canRemovePlayer()"
 				type="button"
@@ -78,7 +81,10 @@
             <td
               v-for="(player, playerIndex) in players"
               :key="playerIndex"
-              :class="{ 'contrat-cell': tour === currentTour }"
+              :class="{
+                'contrat-cell': tour === currentTour,
+                'is-winner-score': gameFinished && tour === lastTour && isWinner(playerIndex)
+              }"
               @click="tour === currentTour && openContractModal(playerIndex)"
             >
 			   <span

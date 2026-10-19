@@ -63,6 +63,26 @@ const appSpec = {
         (cell) => cell.contrat !== null && cell.contrat !== ""
       );
     },
+
+    lastTour() {
+      return this.tours[this.tours.length - 1];
+    },
+
+    gameFinished() {
+      const row = this.scores[this.lastTour];
+      if (!row) return false;
+      return Object.values(row).every(
+        (cell) => cell.score != null && cell.score !== ""
+      );
+    },
+
+    winnerIndexes() {
+      if (!this.gameFinished) return [];
+      const row = this.scores[this.lastTour];
+      const totals = this.players.map((_, i) => Number(row[i].score));
+      const max = Math.max(...totals);
+      return totals.flatMap((score, i) => (score === max ? [i] : []));
+    },
   },
 
   methods: {
@@ -101,6 +121,10 @@ const appSpec = {
       return Object.values(this.scores[tour] || {}).some(
         (cell) => cell.score != null && cell.score !== ""
       );
+    },
+
+    isWinner(playerIndex) {
+      return this.winnerIndexes.includes(playerIndex);
     },
 
     isDealerCell(tourIndex, playerIndex) {
