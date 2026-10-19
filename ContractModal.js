@@ -81,6 +81,22 @@ const ContractModal = {
     closeInsteadOfNext() {
       return this.isLastToSetContract && !this.showPlis;
     },
+    contractTotal() {
+      return Object.values(this.currentTourScores).reduce(
+        (sum, cell) => sum + (Number(cell.contrat) || 0),
+        0
+      );
+    },
+    contractsSumEqualsTour() {
+      return this.allContractsSelected && this.contractTotal === this.tour;
+    },
+    displayError() {
+      if (this.error) return this.error;
+      if (this.contractsSumEqualsTour) {
+        return `La somme des contrats doit être différente de ${this.tour}.`;
+      }
+      return null;
+    },
     showMeta() {
       const hasPlis =
         this.nombrePlisInputs != null && this.nombrePlisInputs !== "";
@@ -102,6 +118,7 @@ const ContractModal = {
   },
   methods: {
     close() {
+      if (this.contractsSumEqualsTour) return;
       this.isOpen = false;
       this.$emit("close");
     },
@@ -114,14 +131,9 @@ const ContractModal = {
       const next = this.currentNumber(value) + delta;
       return next >= 0 && next <= this.tour;
     },
-    isForbiddenContract(value) {
-      if (!this.isLastToSetContract) return false;
-      const forbidden = this.remainingContractToTour;
-      return forbidden >= 0 && forbidden <= this.tour && value === forbidden;
-    },
     nextContractStep(value, delta) {
-      let next = this.currentNumber(value) + delta;
-      if (this.isForbiddenContract(next)) next += delta;
+      const unset = value == null || value === "";
+      const next = unset ? (delta < 0 ? 0 : 1) : this.currentNumber(value) + delta;
       if (next < 0 || next > this.tour) return null;
       return next;
     },
@@ -149,19 +161,6 @@ const ContractModal = {
       value = Number(value);
       if (value < 0 || value > this.tour) {
         this.error = `Le contrat doit être entre 0 et ${tour}.`;
-        return;
-      }
-
-      const otherSum = Object.entries(this.currentTourScores)
-        .filter(([index]) => Number(index) !== this.playerIndex)
-        .reduce((sum, [, cell]) => sum + (Number(cell.contrat) || 0), 0);
-
-      const isLastToSet = Object.entries(this.currentTourScores).every(
-        ([index, cell]) => Number(index) === this.playerIndex || cell.contrat != null
-      );
-
-      if (isLastToSet && otherSum + value === this.tour) {
-        this.error = `La somme des contrats doit être différente de ${tour}.`;
         return;
       }
       this.$emit("update-contract", player, tour, value);
@@ -340,7 +339,7 @@ const ContractModal = {
             </button>
           </div>
 
-          <p v-if="error" class="modal-error">{{ error }}</p>
+          <p v-if="displayError" class="modal-error">{{ displayError }}</p>
         </div>
 
         <button
