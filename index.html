@@ -11,13 +11,55 @@
     <div id="app" class="container grid-lg">
       <header class="page-header">
         <h1>Wist</h1>
-        <button
-          type="button"
-          class="reset-btn"
-          @click="resetGame"
-        >
-          Réinitialiser
-        </button>
+        <div class="header-actions">
+          <div class="share-wrap">
+            <button
+              type="button"
+              class="reset-btn"
+              :class="{ 'is-live': shareCode }"
+              @click="shareOpen = !shareOpen"
+            >
+              {{ shareCode || 'Partager' }}
+            </button>
+            <div v-if="shareOpen" class="share-panel" @click.stop>
+              <template v-if="shareCode">
+                <p class="share-code">{{ shareCode }}</p>
+                <p class="share-status">{{ shareStatusLabel }}</p>
+                <div class="share-actions">
+                  <button type="button" class="reset-btn" @click="copyShareCode">Copier</button>
+                  <button type="button" class="reset-btn" @click="leaveShare">Quitter</button>
+                </div>
+              </template>
+              <template v-else>
+                <label class="share-label">
+                  Code
+                  <input
+                    class="input share-input"
+                    :value="joinDraft"
+                    maxlength="12"
+                    autocapitalize="off"
+                    autocomplete="off"
+                    spellcheck="false"
+                    @input="joinDraft = $event.target.value"
+                    @keydown.enter.prevent="joinShare"
+                  >
+                </label>
+                <p v-if="shareStatusLabel" class="share-status">{{ shareStatusLabel }}</p>
+                <div class="share-actions">
+                  <button type="button" class="reset-btn" :disabled="shareStatus === 'connecting'" @click="joinShare">Rejoindre</button>
+                  <button type="button" class="reset-btn" :disabled="shareStatus === 'connecting'" @click="createShare">Créer</button>
+                </div>
+              </template>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="reset-btn"
+            @click="resetGame"
+          >
+            Réinitialiser
+          </button>
+        </div>
       </header>
 
 	  <!--TABLE-->

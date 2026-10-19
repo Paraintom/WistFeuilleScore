@@ -37,6 +37,78 @@
         background: #e5e7eb;
       }
 
+      .reset-btn:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+
+      .reset-btn.is-live {
+        background: #f3efe4;
+        color: #8a6d2b;
+      }
+
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.45rem;
+      }
+
+      .share-wrap {
+        position: relative;
+      }
+
+      .share-panel {
+        position: absolute;
+        top: calc(100% + 0.4rem);
+        right: 0;
+        z-index: 5;
+        width: 14rem;
+        padding: 0.75rem;
+        background: #fff;
+        border-radius: 14px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+      }
+
+      .share-label {
+        display: flex;
+        flex-direction: column;
+        gap: 0.3rem;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        color: #6b7280;
+      }
+
+      .share-input {
+        text-transform: lowercase;
+        letter-spacing: 0.08em;
+        font-weight: 650;
+      }
+
+      .share-code {
+        margin: 0;
+        text-align: center;
+        font-size: 1.35rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        color: #8a6d2b;
+      }
+
+      .share-status {
+        margin: 0.45rem 0 0;
+        font-size: 0.78rem;
+        color: #6b7280;
+        text-align: center;
+      }
+
+      .share-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.35rem;
+        margin-top: 0.65rem;
+      }
+
       tr {
         height: 3em;
       }

@@ -12,15 +12,27 @@ const appSpec = {
       _restoring: false,
       _persistTimer: null,
       _ignoreHash: false,
+      shareOpen: false,
+      joinDraft: "",
+      shareCode: "",
+      sharePeers: 0,
+      shareStatus: "idle",
+      shareError: "",
+      shareStamp: 0,
+      shareSelfId: Math.random().toString(36).slice(2),
     };
   },
 
   created() {
     this.editingPlayerIndex = 0;
+    this._shareRoom = null;
+    this._shareAction = null;
+    this._applyingShare = false;
     this.initScores();
     this._restoring = true;
     this.loadUrlState();
     this._restoring = false;
+    this._lastShareToken = this.currentShareToken();
     this._persistReady = true;
     window.addEventListener("hashchange", this.onHashChange);
   },
@@ -82,6 +94,15 @@ const appSpec = {
       const totals = this.players.map((_, i) => Number(row[i].score));
       const max = Math.max(...totals);
       return totals.flatMap((score, i) => (score === max ? [i] : []));
+    },
+
+    shareStatusLabel() {
+      if (this.shareStatus === "connecting") return "Connexion…";
+      if (this.shareStatus === "error") return this.shareError;
+      if (!this.shareCode) return "";
+      if (this.sharePeers === 0) return "En attente d’un autre appareil";
+      if (this.sharePeers === 1) return "1 autre appareil";
+      return `${this.sharePeers} autres appareils`;
     },
   },
 
@@ -324,7 +345,7 @@ const appSpec = {
 	  this.$refs.contractModal.isOpen = true;
     },
     closeContractModal() {
-		this.$refs.contractModal.isOpen = false;
+      if (this.$refs.contractModal) this.$refs.contractModal.isOpen = false;
     },
 
     canRemovePlayer() {
@@ -355,6 +376,179 @@ const appSpec = {
       this.writeUrlState();
     },
 
+    normalizeShareCode(value) {
+      return String(value || "").toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 12);
+    },
+
+    async createShare() {
+      const alphabet = "abcdefghjkmnpqrstuvwxyz23456789";
+      let code = "";
+      for (let i = 0; i < 4; i++) {
+        code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      }
+      this.joinDraft = code;
+      this.shareStamp = Math.max(Date.now(), (this.shareStamp || 0) + 1);
+      await this.connectShare(code);
+    },
+
+    async joinShare() {
+      this.shareStamp = 0;
+      await this.connectShare(this.normalizeShareCode(this.joinDraft));
+    },
+
+    async connectShare(code) {
+      if (code.length < 4) {
+        this.shareStatus = "error";
+        this.shareError = "Le code doit avoir au moins 4 caractères.";
+        return;
+      }
+
+      this.shareStatus = "connecting";
+      this.shareError = "";
+      await this.leaveShare(false);
+
+      let joinRoom;
+      try {
+        ({ joinRoom } = await import("https://esm.run/trystero"));
+      } catch (e) {
+        this.shareStatus = "error";
+        this.shareError = "Partage indisponible. Ouvrez la page en http, pas en fichier local.";
+        return;
+      }
+
+      try {
+        const room = joinRoom({ appId: "wist.feuille.score" }, code);
+        const action = room.makeAction("state");
+        this._shareRoom = room;
+        this._shareAction = action;
+        action.onMessage = (payload) => this.onShareMessage(payload);
+        room.onPeerJoin = () => {
+          this.sharePeers = Object.keys(room.getPeers()).length;
+          this.broadcastShare();
+        };
+        room.onPeerLeave = () => {
+          this.sharePeers = Object.keys(room.getPeers()).length;
+        };
+        this.shareCode = code;
+        this.sharePeers = 0;
+        this.shareStatus = "live";
+        this.broadcastShare();
+      } catch (e) {
+        this.shareStatus = "error";
+        this.shareError = "Connexion impossible.";
+        await this.leaveShare(false);
+      }
+    },
+
+    async leaveShare(resetStatus = true) {
+      const room = this._shareRoom;
+      this._shareRoom = null;
+      this._shareAction = null;
+      this.shareCode = "";
+      this.sharePeers = 0;
+      if (resetStatus) {
+        this.shareStatus = "idle";
+        this.shareError = "";
+      }
+      if (room) {
+        try { room.leave(); } catch (e) {}
+      }
+    },
+
+    async copyShareCode() {
+      try {
+        await navigator.clipboard.writeText(this.shareCode);
+      } catch (e) {}
+    },
+
+    currentShareToken() {
+      if (this.isDefaultState()) return "";
+      return WistUrlState.encode({
+        players: this.players,
+        currentTour: this.currentTour,
+        dealerIndex: this.dealerIndex,
+        tours: this.tours,
+        scores: this.scores,
+      });
+    },
+
+    broadcastShare() {
+      if (!this._shareAction || this._applyingShare || !this.shareStamp) return;
+      this._shareAction.send({
+        stamp: this.shareStamp,
+        id: this.shareSelfId,
+        token: this.currentShareToken(),
+      });
+    },
+
+    isNewerShare(payload) {
+      if (!payload || payload.id === this.shareSelfId) return false;
+      if (payload.stamp > this.shareStamp) return true;
+      return payload.stamp === this.shareStamp && String(payload.id) > this.shareSelfId;
+    },
+
+    onShareMessage(payload) {
+      if (!this.isNewerShare(payload)) return;
+      const incoming = payload.token || "";
+      this.shareStamp = payload.stamp;
+      if (incoming === this.currentShareToken()) {
+        this._lastShareToken = incoming;
+        return;
+      }
+      this._applyingShare = true;
+      try {
+        if (!payload.token) {
+          this._restoring = true;
+          this.closeContractModal();
+          this.players = ["Papa", "Maman", "Mimi", "Toto", "Dada"];
+          this.currentTour = 2;
+          this.editingPlayerIndex = 0;
+          this.initScores();
+          this._restoring = false;
+          this.writeUrlState();
+          return;
+        }
+
+        let decoded;
+        try {
+          decoded = WistUrlState.decode(payload.token);
+        } catch (e) {
+          return;
+        }
+        if (!decoded) return;
+        this.applyDecodedState(decoded);
+      } finally {
+        this._applyingShare = false;
+      }
+    },
+
+    applyDecodedState(decoded, quiet = false) {
+      if (!quiet) this.closeContractModal();
+      this._restoring = true;
+      this.players = decoded.players;
+      this.initScores({ resetDealer: false });
+      this.dealerIndex = decoded.dealerIndex;
+
+      decoded.cells.forEach((cell) => {
+        const row = this.scores[cell.tour];
+        if (!row || !row[cell.playerIndex]) return;
+        row[cell.playerIndex].contrat = cell.contrat;
+        row[cell.playerIndex].nombrePlis = cell.nombrePlis;
+      });
+
+      if (this.tours.includes(decoded.currentTour)) {
+        this.currentTour = decoded.currentTour;
+      } else {
+        this.currentTour = this.tours[0];
+      }
+
+      this.players.forEach((_, playerIndex) => {
+        if (this.tours.length) this.computeScore(this.tours[0], playerIndex);
+      });
+      this._restoring = false;
+      if (!quiet) this.writeUrlState();
+    },
+
     onHashChange() {
       if (this._ignoreHash) return;
       this._restoring = true;
@@ -381,23 +575,20 @@ const appSpec = {
     },
 
     writeUrlState() {
-      if (this.isDefaultState()) {
-        this._ignoreHash = true;
-        WistUrlState.writeHash("");
-        this._ignoreHash = false;
-        return;
-      }
-
-      const token = WistUrlState.encode({
-        players: this.players,
-        currentTour: this.currentTour,
-        dealerIndex: this.dealerIndex,
-        tours: this.tours,
-        scores: this.scores,
-      });
+      const token = this.currentShareToken();
       this._ignoreHash = true;
       WistUrlState.writeHash(token);
       this._ignoreHash = false;
+
+      if (this._applyingShare) {
+        this._lastShareToken = token;
+        return;
+      }
+      if (!this._shareAction || token === this._lastShareToken) return;
+
+      this.shareStamp = Math.max(Date.now(), (this.shareStamp || 0) + 1);
+      this._lastShareToken = token;
+      this.broadcastShare();
     },
 
     loadUrlState() {
@@ -411,27 +602,7 @@ const appSpec = {
         return;
       }
       if (!decoded) return;
-
-      this.players = decoded.players;
-      this.initScores({ resetDealer: false });
-      this.dealerIndex = decoded.dealerIndex;
-
-      decoded.cells.forEach((cell) => {
-        const row = this.scores[cell.tour];
-        if (!row || !row[cell.playerIndex]) return;
-        row[cell.playerIndex].contrat = cell.contrat;
-        row[cell.playerIndex].nombrePlis = cell.nombrePlis;
-      });
-
-      if (this.tours.includes(decoded.currentTour)) {
-        this.currentTour = decoded.currentTour;
-      } else {
-        this.currentTour = this.tours[0];
-      }
-
-      this.players.forEach((_, playerIndex) => {
-        if (this.tours.length) this.computeScore(this.tours[0], playerIndex);
-      });
+      this.applyDecodedState(decoded, true);
     },
   },
 };
