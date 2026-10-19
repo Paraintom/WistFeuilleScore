@@ -45,6 +45,16 @@
       #mainTable {
         table-layout: fixed;
         width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+
+      #mainTable thead th {
+        position: sticky;
+        top: 1rem;
+        z-index: 3;
+        background: #fff;
+        box-shadow: inset 0 -2px 0 #dbdbdb, 0 -1rem 0 0 #fff;
       }
 
       #mainTable .col-tour {
