@@ -109,15 +109,23 @@
 			}"
 		  >
 			<td
-			  class="has-text-weight-semibold is-clickable"
+			  class="has-text-weight-semibold is-clickable tour-cell"
 			  :class="{
 				'has-text-info': tourIndex === tours.indexOf(currentTour),
 				'has-text-grey-light': tour !== currentTour && !tourHasScore(tour)
 			  }"
 			  @click="selectCurrentTour(tourIndex)"
 			>
-			  {{ tour }}
-			  
+			  <span class="tour-stack">
+			    <span class="tour-number">{{ tour }}</span>
+			    <span
+			      v-if="contractDelta(tour) != null"
+			      class="bid-chip"
+			      :style="bidChipStyle(contractDelta(tour))"
+			    >
+			      {{ formatContractDelta(contractDelta(tour)) }}
+			    </span>
+			  </span>
 			</td>
 
             <td

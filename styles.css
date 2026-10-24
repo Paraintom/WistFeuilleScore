@@ -140,6 +140,36 @@
         background: #fff;
       }
 
+      .tour-cell {
+        padding-left: 0.15em !important;
+        padding-right: 0.15em !important;
+        text-align: center;
+        vertical-align: middle;
+      }
+
+      .tour-stack {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.12em;
+        line-height: 1;
+      }
+
+      .tour-number {
+        line-height: 1;
+      }
+
+      .bid-chip {
+        display: inline-block;
+        max-width: 100%;
+        border-radius: 999px;
+        padding: 0.06em 0.28em;
+        line-height: 1.15;
+        pointer-events: none;
+        white-space: nowrap;
+      }
+
       .winner-chip {
         position: absolute;
         top: 0.2em;

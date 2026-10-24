@@ -144,6 +144,37 @@ const appSpec = {
       );
     },
 
+    contractDelta(tour) {
+      const row = this.scores[tour];
+      if (!row) return null;
+      const cells = Object.values(row);
+      const allSet = cells.every(
+        (cell) => cell.contrat !== null && cell.contrat !== undefined && cell.contrat !== ""
+      );
+      if (!allSet) return null;
+      const demanded = cells.reduce((sum, cell) => sum + (Number(cell.contrat) || 0), 0);
+      return demanded - Number(tour);
+    },
+
+    formatContractDelta(delta) {
+      if (delta > 0) return `+${delta}`;
+      return String(delta);
+    },
+
+    bidChipStyle(delta) {
+      const weight = Math.min(Math.abs(delta) / 5, 1);
+      const neutral = delta === 0;
+      const positive = delta > 0;
+      const rgb = neutral ? "107, 114, 128" : positive ? "204, 15, 53" : "50, 115, 220";
+      const ink = neutral ? "#374151" : positive ? "#7f1028" : "#173a78";
+      return {
+        color: ink,
+        background: `rgba(${rgb}, ${0.16 + weight * 0.28})`,
+        fontSize: `${0.58 + weight * 0.1}rem`,
+        fontWeight: String(600 + Math.round(weight * 200)),
+      };
+    },
+
     isWinner(playerIndex) {
       return this.winnerIndexes.includes(playerIndex);
     },
